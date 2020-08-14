@@ -20,25 +20,34 @@ const (
 {{- if eq .Status "resolved" -}}
 [Resolved]
 {{- end -}}
-{{- if eq .CommonLabels.alert_type "event" }}
+{{- if eq .CommonLabels.alert_type "event" -}}
 {{ .CommonLabels.event_type}} event of {{.GroupLabels.resource_kind}} occurred
-{{- else if eq .CommonLabels.alert_type "systemService" }}
+
+{{- else if eq .CommonLabels.alert_type "systemService" -}}
 The system component {{ .GroupLabels.component_name}} is not running
-{{- else if eq .CommonLabels.alert_type "nodeHealthy" }}
+
+{{- else if eq .CommonLabels.alert_type "nodeHealthy" -}}
 The kubelet on the node {{ .GroupLabels.node_name}} is not healthy
-{{- else if eq .CommonLabels.alert_type "nodeCPU" }}
+
+{{- else if eq .CommonLabels.alert_type "nodeCPU" -}}
 The CPU usage on the node {{ .GroupLabels.node_name}} is over {{ .CommonLabels.cpu_threshold}}%
-{{- else if eq .CommonLabels.alert_type "nodeMemory" }}
+
+{{- else if eq .CommonLabels.alert_type "nodeMemory" -}}
 The memory usage on the node {{ .GroupLabels.node_name}} is over {{ .CommonLabels.mem_threshold}}%
-{{- else if eq .CommonLabels.alert_type "podNotScheduled" }}
+
+{{- else if eq .CommonLabels.alert_type "podNotScheduled" -}}
 The Pod {{ if .GroupLabels.namespace}}{{.GroupLabels.namespace}}:{{end}}{{.GroupLabels.pod_name}} is not scheduled
-{{- else if eq .CommonLabels.alert_type "podNotRunning" }}
+
+{{- else if eq .CommonLabels.alert_type "podNotRunning" -}}
 The Pod {{ if .GroupLabels.namespace}}{{.GroupLabels.namespace}}:{{end}}{{.GroupLabels.pod_name}} is not running
-{{- else if eq .CommonLabels.alert_type "podRestarts" }}
+
+{{- else if eq .CommonLabels.alert_type "podRestarts" -}}
 The Pod {{ if .GroupLabels.namespace}}{{.GroupLabels.namespace}}:{{end}}{{.GroupLabels.pod_name}} restarts {{ .CommonLabels.restart_times}} times in {{ .CommonLabels.restart_interval}} sec
-{{- else if eq .CommonLabels.alert_type "workload" }}
+
+{{- else if eq .CommonLabels.alert_type "workload" -}}
 The workload {{ if .GroupLabels.workload_namespace}}{{.GroupLabels.workload_namespace}}:{{end}}{{.GroupLabels.workload_name}} has available replicas less than {{ .CommonLabels.available_percentage}}%
-{{- else if eq .CommonLabels.alert_type "metric" }}
+
+{{- else if eq .CommonLabels.alert_type "metric" -}}
 The metric {{ .CommonLabels.alert_name}} crossed the threshold
 {{ end -}}
 
@@ -53,9 +62,14 @@ The metric {{ .CommonLabels.alert_name}} crossed the threshold
 {{ end -}}
 
 {{- define "__text_single" -}}
+Server URL: {{ .Labels.server_url}}
 Alert Name: {{ .Labels.alert_name}}
 Severity: {{ .Labels.severity}}
 Cluster Name: {{.Labels.cluster_name}}
+{{- if .Labels.node_ip }}
+Node IP: {{ .Labels.node_ip}}{{ end -}}
+{{- if .Labels.pod_ip }}
+Pod IP: {{ .Labels.pod_ip}}{{ end -}}
 {{- if eq .Labels.alert_type "event" }}
 {{- if .Labels.workload_name }}
 Workload Name: {{.Labels.workload_name}}{{ end }}
@@ -103,7 +117,11 @@ Project Name: {{ .Labels.project_name}}{{ end }}
 {{- if .Labels.pod_name }}
 Pod Name: {{ .Labels.pod_name}}{{ else if .Labels.pod -}}Pod Name: {{ .Labels.pod}}{{ end }}
 Expression: {{ .Labels.expression}}
+{{- if .Labels.threshold_value }}
 Description: Threshold Crossed: datapoint value {{ .Annotations.current_value}} was {{ .Labels.comparison}} to the threshold ({{ .Labels.threshold_value}}) for ({{ .Labels.duration}})
+{{- else}}
+Description: The configured event happened for ({{ .Labels.duration}}): expression matched, datapoint value is {{ .Annotations.current_value}}
+{{ end -}}
 {{ end -}}
 {{- if .Labels.logs }}
 Logs: {{ .Labels.logs}}
