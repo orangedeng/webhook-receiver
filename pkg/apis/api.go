@@ -55,7 +55,17 @@ func sendAlert(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	msg, err := tmpl.ExecuteTextString(td)
+	tpl, err := options.GetTemplate()
+	if err != nil {
+		log.Errorf("get template err:%v", err)
+		err = resp.WriteErrorString(400, err.Error())
+		if err != nil {
+			log.Errorf("failed to write error string err:%v", err)
+		}
+		return
+	}
+
+	msg, err := tmpl.ExecuteTextString(td, tpl)
 	if err != nil {
 		log.Errorf("tmpl parse err: %v", err)
 		err = resp.WriteErrorString(500, err.Error())

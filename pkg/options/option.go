@@ -3,6 +3,8 @@ package options
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -41,6 +43,22 @@ func Init(configPath string) {
 	})
 
 	go viper.WatchConfig()
+}
+
+func GetTemplate() (string, error) {
+	mut.RLock()
+	defer mut.RUnlock()
+	file, err := os.Open("/etc/webhook-receiver/tmpl/notification.tmpl")
+	if err != nil {
+		return "", fmt.Errorf("open notification.tmpl file err:%v", err)
+	}
+	defer file.Close()
+
+	fileData, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("read notification.tmpl file err:%v", err)
+	}
+	return string(fileData), nil
 }
 
 func GetReceiverAndSender(receiverName string) (providers.Receiver, providers.Sender, error) {
