@@ -22,6 +22,9 @@ const (
 	signNameKey     = "sign_name"
 	templateCodeKey = "template_code"
 	proxyURLKey     = "proxy_url"
+
+	//PANDARIA: aliyun sms alert message limit
+	aliyunMsgLimit = 900
 )
 
 type sender struct {
@@ -38,6 +41,10 @@ type aliyunResponse struct {
 }
 
 func (s *sender) Send(msg string, receiver providers.Receiver) error {
+	if len(msg) > aliyunMsgLimit {
+		msg = msg[:aliyunMsgLimit]
+	}
+
 	if s.proxyURL != "" {
 		s.client.SetHttpsProxy(s.proxyURL)
 	}

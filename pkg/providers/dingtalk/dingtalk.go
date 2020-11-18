@@ -22,6 +22,9 @@ const (
 	webhookURLKey = "webhook_url"
 	secretKey     = "secret"
 	proxyURLKey   = "proxy_url"
+
+	//PANDARIA: dingtalk alert message limit
+	dingtalkMsgLimit = 19000
 )
 
 type sender struct {
@@ -48,6 +51,10 @@ func New(opt map[string]string) (providers.Sender, error) {
 }
 
 func (s *sender) Send(msg string, receiver providers.Receiver) error {
+	if len(msg) > dingtalkMsgLimit {
+		msg = msg[:dingtalkMsgLimit]
+	}
+
 	payload, err := newPayload(msg)
 	if err != nil {
 		return err
@@ -95,7 +102,7 @@ func (s *sender) Send(msg string, receiver providers.Receiver) error {
 		return err
 	}
 	if dtr.ErrCode != 0 {
-		return fmt.Errorf("dingtalk response errcode:%d", dtr.ErrCode)
+		return fmt.Errorf("dingtalk response errcode: %d, errmsg: %s", dtr.ErrCode, dtr.ErrMsg)
 	}
 
 	return nil
