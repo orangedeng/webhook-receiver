@@ -24,7 +24,7 @@ const (
 	proxyURLKey     = "proxy_url"
 
 	//PANDARIA: aliyun sms alert message limit
-	aliyunMsgLimit = 900
+	aliyunMsgLimit = 600
 )
 
 type sender struct {
