@@ -24,6 +24,7 @@ for file in `find bin -print`; do
         platform=`dirname $shortten`
         os="${platform%/*}"
         arch="${platform#*/}"
+        ext=""
         [ "$os" = "windows" ] && ext=".exe"
         echo $os $arch $binary
         cp "$file" dist/artifacts/$binary-$os-$arch$ext
