@@ -16,7 +16,21 @@ if echo $TAG | grep -q dirty; then
 fi
 
 mkdir -p dist/artifacts
-cp bin/webhook-receiver dist/artifacts/webhook-receiver${SUFFIX}
+for file in `find bin -print`; do 
+    shortten=${file#bin\/}
+    case "$shortten" in 
+        */*/*)
+        binary=`basename $shortten .exe`
+        platform=`dirname $shortten`
+        os="${platform%/*}"
+        arch="${platform#*/}"
+        [ "$os" = "windows" ] && ext=".exe"
+        echo $os $arch $binary
+        cp "$file" dist/artifacts/$binary-$os-$arch$ext
+        ;;
+    esac
+
+done
 
 IMAGE=${REPO}/webhook-receiver:${TAG}
 DOCKERFILE=package/Dockerfile

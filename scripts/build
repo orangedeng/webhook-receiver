@@ -14,7 +14,16 @@ LINKFLAGS="-X main.Version=$VERSION"
 LINKFLAGS="-X main.GitCommit=$COMMIT $LINKFLAGS"
 
 CGO_ENABLED=0 go build -ldflags "$LINKFLAGS $OTHER_LINKFLAGS" -o bin/webhook-receiver cmd/main.go
-if [ "$CROSS" = "true" ] && [ "$ARCH" = "amd64" ]; then
-    GOOS=darwin go build -ldflags "$LINKFLAGS $OTHER_LINKFLAGS" -o bin/webhook-receiver-darwin cmd/main.go
-    GOOS=windows go build -ldflags "$LINKFLAGS $OTHER_LINKFLAGS" -o bin/webhook-receiver-windows cmd/main.go
+
+if [ -n "$CROSS" ]; then
+    for platform in linux/amd64 linux/arm64 windows/amd64 darwin/amd64; do
+        os="${platform%/*}"
+        arch="${platform#*/}"
+        FLAGS="$LINKFLAGS"
+        [ "$os" = "linux" ] && FLAGS="-extldflags -static -s $FLAGS"
+        echo "building $os $arch binary"
+        mkdir -p bin/$os/$arch
+        GOOS=$os GOARCH=$arch go build -ldflags "$FLAGS" -o bin/$os/$arch/webhook-receiver cmd/main.go
+        [ "$os" = "windows" ] && mv bin/$os/$arch/webhook-receiver bin/$os/$arch/webhook-receiver.exe || true
+    done
 fi
