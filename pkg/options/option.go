@@ -2,7 +2,7 @@ package options
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,7 +51,7 @@ func GetTemplate() (string, error) {
 	}
 	defer file.Close()
 
-	fileData, err := ioutil.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
 		return "", fmt.Errorf("read notification.tmpl file err:%v", err)
 	}

@@ -2,6 +2,7 @@ package tmpl
 
 import (
 	"bytes"
+	"golang.org/x/text/cases"
 	"regexp"
 	"strings"
 	"text/template"
@@ -31,7 +32,7 @@ type FuncMap map[string]interface{}
 var DefaultFuncs = FuncMap{
 	"toUpper": strings.ToUpper,
 	"toLower": strings.ToLower,
-	"title":   strings.Title,
+	"title":   cases.Title,
 	"join": func(sep string, s []string) string {
 		return strings.Join(s, sep)
 	},

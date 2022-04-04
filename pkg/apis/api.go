@@ -2,14 +2,12 @@ package apis
 
 import (
 	"encoding/json"
-	"io/ioutil"
-
 	"github.com/emicklei/go-restful"
 	"github.com/prometheus/alertmanager/template"
-
 	"github.com/rancher/webhook-receiver/pkg/options"
 	"github.com/rancher/webhook-receiver/pkg/tmpl"
 	log "github.com/sirupsen/logrus"
+	"io"
 )
 
 func RegisterAPIs() {
@@ -24,7 +22,7 @@ func RegisterAPIs() {
 }
 
 func sendAlert(req *restful.Request, resp *restful.Response) {
-	bodyData, err := ioutil.ReadAll(req.Request.Body)
+	bodyData, err := io.ReadAll(req.Request.Body)
 	if err != nil {
 		log.Errorf("read req body err:%v", err)
 		err = resp.WriteErrorString(400, err.Error())
