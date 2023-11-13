@@ -1,5 +1,5 @@
 ARG ARCH
-FROM ${ARCH}registry.suse.com/bci/bci-micro:15.4
+FROM ${ARCH}registry.suse.com/bci/bci-micro:15.5
 ARG user=webhookreceiver
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM

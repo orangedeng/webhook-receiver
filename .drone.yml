@@ -1,21 +1,19 @@
 ---
 kind: pipeline
-type: docker
-name: default-amd64
+name: linux-amd64
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-  - name: build
+  - name: ci
     pull: always
-    image: rancher/dapper:v0.4.1
+    image: rancher/dapper:v0.6.0
     environment:
       CROSS: "true"
     commands:
       - dapper ci
-    privileged: true
     volumes:
       - name: docker
         path: /var/run/docker.sock
@@ -30,7 +28,6 @@ steps:
     settings:
       api_key:
         from_secret: github_token
-      prerelease: true
       checksum:
         - sha256
       checksum_file: CHECKSUMsum-amd64.txt
@@ -44,56 +41,30 @@ steps:
       event:
         - tag
 
-  - name: docker-publish-head
+  - name: docker-publish
     image: plugins/docker
     settings:
-      build_args:
-        - ARCH=amd64
-      custom_dns: 1.1.1.1
       dockerfile: package/Dockerfile
-      tag: latest
-      password:
-        from_secret: docker_password
-      repo: cnrancher/webhook-receiver
       username:
         from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: "cnrancher/webhook-receiver"
+      tag: "${DRONE_TAG}-amd64"
     when:
-      ref:
-        include:
-          - "refs/heads/master"
-      event:
-        - push
-
-  - name: install-buildx-support
-    image: tonistiigi/binfmt
-    privileged: true
-    entrypoint:
-      - /usr/bin/binfmt
-    command:
-      - --install
-      - all
-    when:
-      branch:
-        - pandaria
       event:
         - tag
 
-  - name: docker-publish
-    image: thegeeklab/drone-docker-buildx
-    privileged: true
+  - name: docker-build
+    image: plugins/docker
     settings:
-      platforms: linux/amd64,linux/arm64/v8
-      custom_dns: 1.1.1.1
       dockerfile: package/Dockerfile
-      password:
-        from_secret: docker_password
-      repo: cnrancher/webhook-receiver
-      tag: "${DRONE_TAG}"
-      username:
-        from_secret: docker_username
+      repo: "cnrancher/webhook-receiver"
+      tag: "${DRONE_COMMIT}-amd64"
+      dry_run: true
     when:
       event:
-        - tag
+        - pull_request
 
 volumes:
   - name: docker
@@ -103,7 +74,111 @@ volumes:
 node:
   instance: agent-amd64
 
-trigger:
-  event:
-    exclude:
-      - promote
+---
+kind: pipeline
+name: linux-arm64
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+  - name: ci
+    pull: always
+    image: rancher/dapper:v0.6.0
+    environment:
+      CROSS: "true"
+    commands:
+      - dapper ci
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+    when:
+      event:
+        - push
+        - pull_request
+        - tag
+
+  - name: github_binary_release
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_token
+      checksum:
+        - sha256
+      checksum_file: CHECKSUMsum-arm64.txt
+      checksum_flatten: true
+      files:
+        - "dist/artifacts/*"
+    when:
+      ref:
+        - refs/head/master
+        - refs/tags/*
+      event:
+        - tag
+
+  - name: docker-publish
+    image: plugins/docker
+    settings:
+      dockerfile: package/Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: "cnrancher/webhook-receiver"
+      tag: "${DRONE_TAG}-arm64"
+    when:
+      event:
+        - tag
+
+  - name: docker-build
+    image: plugins/docker
+    settings:
+      dockerfile: package/Dockerfile
+      repo: "cnrancher/webhook-receiver"
+      tag: "${DRONE_COMMIT}-arm64"
+      dry_run: true
+    when:
+      event:
+        - pull_request
+
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+
+node:
+  instance: agent-arm64
+
+---
+
+kind: pipeline
+name: manifest
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: manifest
+    image: plugins/manifest:1.0.2
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      target: "cnrancher/webhook-receiver:${DRONE_TAG}"
+      template: "cnrancher/webhook-receiver:${DRONE_TAG}-ARCH"
+    when:
+      event:
+        - tag
+
+node:
+  instance: agent-amd64
+
+depends_on:
+  - linux-amd64
+  - linux-arm64
